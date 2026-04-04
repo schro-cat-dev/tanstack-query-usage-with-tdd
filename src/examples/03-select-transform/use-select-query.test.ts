@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { waitFor } from '@testing-library/react'
 import { renderHookWithProviders } from '@/test/helpers/render.js'
 import { useUserNames, useUsersByRole, useUserStats } from './use-select-query.js'
+import type { PaginatedResponse } from '@/types/api.js'
+import type { User } from '@/types/user.js'
 
 describe('03: select オプション — データ変換', () => {
   const defaultParams = { page: 1, perPage: 10 }
@@ -82,10 +84,14 @@ describe('03: select オプション — データ変換', () => {
       })
 
       // キャッシュにはフルデータ (PaginatedResponse) が入っている
-      const cached = queryClient.getQueryData(['users', 'list', defaultParams])
+      const cached = queryClient.getQueryData<PaginatedResponse<User>>(
+        ['users', 'list', defaultParams],
+      )
       expect(cached).toBeDefined()
-      expect((cached as any).data).toBeInstanceOf(Array)
-      expect((cached as any).total).toBeDefined()
+      expect(cached?.data).toBeInstanceOf(Array)
+      expect(cached?.data[0]).toHaveProperty('id')
+      expect(cached?.data[0]).toHaveProperty('name')
+      expect(cached?.total).toBeGreaterThan(0)
     })
   })
 })

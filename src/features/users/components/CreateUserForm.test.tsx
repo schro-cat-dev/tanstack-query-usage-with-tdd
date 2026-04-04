@@ -104,6 +104,36 @@ describe('CreateUserForm', () => {
     expect(screen.getByRole('button', { name: '作成' })).toBeDisabled()
   })
 
+  it('@なしのメールアドレスでもバリデーションエラーになる', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<CreateUserForm />)
+
+    await user.type(screen.getByLabelText('名前'), 'テスト')
+    await user.type(screen.getByLabelText('メールアドレス'), 'noatsign')
+
+    expect(
+      screen.getByText('有効なメールアドレスを入力してください'),
+    ).toBeInTheDocument()
+  })
+
+  it('エラー後もフォームの入力値が維持される', async () => {
+    server.use(userErrorHandlers.createServerError)
+    const user = userEvent.setup()
+    renderWithProviders(<CreateUserForm />)
+
+    await user.type(screen.getByLabelText('名前'), '入力済みユーザー')
+    await user.type(screen.getByLabelText('メールアドレス'), 'keep@example.com')
+    await user.selectOptions(screen.getByLabelText('ロール'), 'editor')
+    await user.click(screen.getByRole('button', { name: '作成' }))
+
+    await screen.findByText('サーバーエラーが発生しました')
+
+    // エラー後もフォームの値は維持される
+    expect(screen.getByLabelText('名前')).toHaveValue('入力済みユーザー')
+    expect(screen.getByLabelText('メールアドレス')).toHaveValue('keep@example.com')
+    expect(screen.getByLabelText('ロール')).toHaveValue('editor')
+  })
+
   it('成功後にフォームがリセットされる', async () => {
     const user = userEvent.setup()
     renderWithProviders(<CreateUserForm />)
