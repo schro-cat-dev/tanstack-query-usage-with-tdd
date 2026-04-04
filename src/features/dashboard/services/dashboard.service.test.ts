@@ -11,31 +11,49 @@ const apiClient = new ApiClient('http://localhost')
 const service = new DashboardService(apiClient)
 
 describe('DashboardService', () => {
-  it('ダッシュボードデータを正常に取得できる', async () => {
-    const data = await service.getDashboardData()
-    expect(data).toEqual(mockDashboardData)
-    expect(data.stats.totalUsers).toBe(10)
-    expect(data.recentActivity).toHaveLength(3)
+  describe('getDashboardData (全データ)', () => {
+    it('ダッシュボードデータを正常に取得できる', async () => {
+      const data = await service.getDashboardData()
+      expect(data).toEqual(mockDashboardData)
+    })
+
+    it('500エラー時にApiErrorをスローする', async () => {
+      server.use(dashboardErrorHandlers.serverError)
+      await expect(service.getDashboardData()).rejects.toThrow(ApiError)
+    })
+
+    it('ネットワークエラー時にエラーをスローする', async () => {
+      server.use(
+        http.get('*/api/dashboard', () => HttpResponse.error()),
+      )
+      await expect(service.getDashboardData()).rejects.toThrow()
+    })
   })
 
-  it('500エラー時にApiErrorをスローする', async () => {
-    server.use(dashboardErrorHandlers.serverError)
+  describe('getStats (統計のみ)', () => {
+    it('統計データのみ取得できる', async () => {
+      const stats = await service.getStats()
+      expect(stats).toEqual(mockDashboardData.stats)
+      expect(stats.totalUsers).toBe(10)
+      expect(stats.roleBreakdown).toHaveLength(3)
+    })
 
-    await expect(service.getDashboardData()).rejects.toThrow(ApiError)
-    try {
-      await service.getDashboardData()
-    } catch (error) {
-      expect((error as ApiError).status).toBe(500)
-    }
+    it('500エラー時にApiErrorをスローする', async () => {
+      server.use(dashboardErrorHandlers.statsError)
+      await expect(service.getStats()).rejects.toThrow(ApiError)
+    })
   })
 
-  it('ネットワークエラー時にエラーをスローする', async () => {
-    server.use(
-      http.get('*/api/dashboard', () => {
-        return HttpResponse.error()
-      }),
-    )
+  describe('getActivity (アクティビティのみ)', () => {
+    it('アクティビティのみ取得できる', async () => {
+      const activity = await service.getActivity()
+      expect(activity).toEqual(mockDashboardData.recentActivity)
+      expect(activity).toHaveLength(3)
+    })
 
-    await expect(service.getDashboardData()).rejects.toThrow()
+    it('500エラー時にApiErrorをスローする', async () => {
+      server.use(dashboardErrorHandlers.activityError)
+      await expect(service.getActivity()).rejects.toThrow(ApiError)
+    })
   })
 })

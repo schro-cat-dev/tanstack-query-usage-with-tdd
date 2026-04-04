@@ -6,6 +6,19 @@ export const mockDashboardData: DashboardData = {
     activeUsers: 7,
     newUsersToday: 1,
     newUsersThisWeek: 3,
+    roleBreakdown: [
+      { role: 'admin', count: 2 },
+      { role: 'editor', count: 4 },
+      { role: 'viewer', count: 4 },
+    ],
+    weeklyNewUsers: [
+      { week: '3/3', count: 1 },
+      { week: '3/10', count: 2 },
+      { week: '3/17', count: 1 },
+      { week: '3/24', count: 3 },
+      { week: '3/31', count: 2 },
+      { week: '4/1', count: 1 },
+    ],
   },
   recentActivity: [
     {

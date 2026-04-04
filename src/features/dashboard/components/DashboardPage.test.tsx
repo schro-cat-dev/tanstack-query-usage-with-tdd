@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
 import { server } from '@/mocks/server.js'
 import { dashboardErrorHandlers } from '@/mocks/handlers/dashboard.handlers.js'
 import { renderWithProviders } from '@/test/helpers/render.js'
@@ -30,7 +31,8 @@ describe('DashboardPage', () => {
   })
 
   it('APIエラー時にエラーメッセージが表示される', async () => {
-    server.use(dashboardErrorHandlers.serverError)
+    server.use(dashboardErrorHandlers.statsError)
+    server.use(dashboardErrorHandlers.activityError)
 
     renderWithProviders(<DashboardPage />)
 
@@ -38,7 +40,8 @@ describe('DashboardPage', () => {
   })
 
   it('エラー時にリトライボタンが表示され、クリックで再取得する', async () => {
-    server.use(dashboardErrorHandlers.serverError)
+    server.use(dashboardErrorHandlers.statsError)
+    server.use(dashboardErrorHandlers.activityError)
     const user = userEvent.setup()
 
     renderWithProviders(<DashboardPage />)
@@ -46,7 +49,6 @@ describe('DashboardPage', () => {
     const retryButton = await screen.findByRole('button', { name: 'リトライ' })
     expect(retryButton).toBeInTheDocument()
 
-    // リトライ後は正常系ハンドラに戻っている（resetHandlers済み）
     server.resetHandlers()
     await user.click(retryButton)
 
@@ -54,13 +56,15 @@ describe('DashboardPage', () => {
   })
 
   it('アクティビティが空の場合は空メッセージが表示される', async () => {
-    const { http, HttpResponse } = await import('msw')
     server.use(
-      http.get('*/api/dashboard', () => {
+      http.get('*/api/dashboard/stats', () => {
         return HttpResponse.json({
-          stats: { totalUsers: 0, activeUsers: 0, newUsersToday: 0, newUsersThisWeek: 0 },
-          recentActivity: [],
+          totalUsers: 0, activeUsers: 0, newUsersToday: 0, newUsersThisWeek: 0,
+          roleBreakdown: [], weeklyNewUsers: [],
         })
+      }),
+      http.get('*/api/dashboard/activity', () => {
+        return HttpResponse.json([])
       }),
     )
 

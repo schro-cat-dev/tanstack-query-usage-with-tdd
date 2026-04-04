@@ -16,19 +16,19 @@ function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <div className="app">
         <header>
-          <nav style={{ display: 'flex', gap: '1rem', padding: '1rem', borderBottom: '1px solid #ccc' }}>
-            <Link to="/" activeProps={{ style: { fontWeight: 'bold' } }}>
+          <nav>
+            <Link to="/" activeOptions={{ exact: true }}>
               Dashboard
             </Link>
-            <Link to="/users" activeProps={{ style: { fontWeight: 'bold' } }}>
+            <Link to="/users" activeOptions={{ exact: true }}>
               Users
             </Link>
-            <Link to="/users/create" activeProps={{ style: { fontWeight: 'bold' } }}>
-              Create User
+            <Link to="/users/create">
+              + Create User
             </Link>
           </nav>
         </header>
-        <main style={{ padding: '1rem' }}>
+        <main>
           <Outlet />
         </main>
       </div>
@@ -38,9 +38,11 @@ function RootLayout() {
 
 function NotFound() {
   return (
-    <div>
-      <h1>404 - ページが見つかりません</h1>
-      <p>お探しのページは存在しません。</p>
+    <div style={{ textAlign: 'center', padding: '64px 24px' }}>
+      <h1>404</h1>
+      <p style={{ color: 'var(--c-text-sub)', marginBottom: '24px' }}>
+        お探しのページは存在しません
+      </p>
       <Link to="/">ダッシュボードに戻る</Link>
     </div>
   )

@@ -17,8 +17,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <RouterProvider router={router} />
-  </StrictMode>,
-)
+async function start() {
+  // 開発環境ではMSWのブラウザワーカーを起動してAPIをモック
+  if (import.meta.env.DEV) {
+    const { worker } = await import('./mocks/browser.js')
+    await worker.start({ onUnhandledRequest: 'bypass' })
+  }
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>,
+  )
+}
+
+start()

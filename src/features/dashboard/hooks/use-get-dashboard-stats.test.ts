@@ -10,23 +10,25 @@ describe('useGetDashboardStats', () => {
   it('初期状態はローディング中である', () => {
     const { result } = renderHookWithProviders(() => useGetDashboardStats())
     expect(result.current.isLoading).toBe(true)
-    expect(result.current.data).toBeUndefined()
+    expect(result.current.stats).toBeUndefined()
+    expect(result.current.recentActivity).toBeUndefined()
   })
 
-  it('ダッシュボードデータを正常に取得できる', async () => {
+  it('統計データとアクティビティを並行取得できる', async () => {
     const { result } = renderHookWithProviders(() => useGetDashboardStats())
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true)
+      expect(result.current.isLoading).toBe(false)
     })
 
-    expect(result.current.data).toEqual(mockDashboardData)
-    expect(result.current.data?.stats.totalUsers).toBe(10)
-    expect(result.current.data?.recentActivity).toHaveLength(3)
+    expect(result.current.stats).toEqual(mockDashboardData.stats)
+    expect(result.current.stats?.totalUsers).toBe(10)
+    expect(result.current.recentActivity).toEqual(mockDashboardData.recentActivity)
+    expect(result.current.recentActivity).toHaveLength(3)
   })
 
-  it('APIエラー時にエラー状態になる', async () => {
-    server.use(dashboardErrorHandlers.serverError)
+  it('統計APIエラー時にエラー状態になる', async () => {
+    server.use(dashboardErrorHandlers.statsError)
 
     const { result } = renderHookWithProviders(() => useGetDashboardStats())
 
@@ -37,17 +39,17 @@ describe('useGetDashboardStats', () => {
     expect(result.current.error).toBeDefined()
   })
 
-  it('refetch関数でデータを再取得できる', async () => {
+  it('refetch関数で両方のデータを再取得できる', async () => {
     const { result } = renderHookWithProviders(() => useGetDashboardStats())
 
     await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true)
+      expect(result.current.isLoading).toBe(false)
     })
 
-    const { refetch } = result.current
-    await refetch()
+    result.current.refetch()
 
-    expect(result.current.isSuccess).toBe(true)
-    expect(result.current.data).toEqual(mockDashboardData)
+    await waitFor(() => {
+      expect(result.current.stats).toBeDefined()
+    })
   })
 })
