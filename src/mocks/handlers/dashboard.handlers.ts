@@ -2,13 +2,7 @@ import { http, HttpResponse, delay } from 'msw'
 import { mockDashboardData } from '@/mocks/data/dashboard.js'
 
 export const dashboardHandlers = [
-  // GET /api/dashboard — 全データ（後方互換）
-  http.get('*/api/dashboard', async ({ request }) => {
-    const url = new URL(request.url)
-    // /api/dashboard/stats や /api/dashboard/activity にはマッチさせない
-    if (url.pathname.endsWith('/stats') || url.pathname.endsWith('/activity')) return
-    return HttpResponse.json(mockDashboardData)
-  }),
+  // 具体的なパスを先に定義（MSW は先にマッチしたものを使う）
 
   // GET /api/dashboard/stats — 統計データのみ
   http.get('*/api/dashboard/stats', () => {
@@ -18,6 +12,11 @@ export const dashboardHandlers = [
   // GET /api/dashboard/activity — アクティビティのみ
   http.get('*/api/dashboard/activity', () => {
     return HttpResponse.json(mockDashboardData.recentActivity)
+  }),
+
+  // GET /api/dashboard — 全データ（後方互換）
+  http.get('*/api/dashboard', () => {
+    return HttpResponse.json(mockDashboardData)
   }),
 ]
 

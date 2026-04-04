@@ -4,13 +4,42 @@ import type { User, CreateUserRequest, CreateUserResponse } from '@/types/user.j
 import { mockUsers } from '@/mocks/data/users.js'
 
 export const userHandlers = [
+  // 具体的なパスを先に定義
+
+  // GET /api/users/export/csv - CSVエクスポート
+  http.get('*/api/users/export/csv', ({ request }) => {
+    const url = new URL(request.url)
+    const query = url.searchParams.get('query') ?? ''
+    const role = url.searchParams.get('role') ?? ''
+
+    let filtered = [...mockUsers]
+    if (query) {
+      const q = query.toLowerCase()
+      filtered = filtered.filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q),
+      )
+    }
+    if (role) {
+      filtered = filtered.filter((u) => u.role === role)
+    }
+
+    const header = 'id,name,email,role,createdAt,updatedAt'
+    const rows = filtered.map(
+      (u) =>
+        `${u.id},${u.name},${u.email},${u.role},${u.createdAt},${u.updatedAt}`,
+    )
+    const csv = [header, ...rows].join('\n')
+
+    return new HttpResponse(csv, {
+      headers: { 'Content-Type': 'text/csv' },
+    })
+  }),
+
   // GET /api/users - ユーザー一覧（検索・ページネーション対応）
   http.get('*/api/users', ({ request }) => {
     const url = new URL(request.url)
-
-    // CSVエクスポートのパスは別ハンドラで処理
-    if (url.pathname.includes('export')) return
-
     const query = url.searchParams.get('query') ?? ''
     const role = url.searchParams.get('role') ?? ''
     const page = Number(url.searchParams.get('page') ?? '1')
@@ -64,37 +93,6 @@ export const userHandlers = [
 
     const response: CreateUserResponse = { user: newUser }
     return HttpResponse.json(response, { status: 201 })
-  }),
-
-  // GET /api/users/export/csv - CSVエクスポート
-  http.get('*/api/users/export/csv', ({ request }) => {
-    const url = new URL(request.url)
-    const query = url.searchParams.get('query') ?? ''
-    const role = url.searchParams.get('role') ?? ''
-
-    let filtered = [...mockUsers]
-    if (query) {
-      const q = query.toLowerCase()
-      filtered = filtered.filter(
-        (u) =>
-          u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q),
-      )
-    }
-    if (role) {
-      filtered = filtered.filter((u) => u.role === role)
-    }
-
-    const header = 'id,name,email,role,createdAt,updatedAt'
-    const rows = filtered.map(
-      (u) =>
-        `${u.id},${u.name},${u.email},${u.role},${u.createdAt},${u.updatedAt}`,
-    )
-    const csv = [header, ...rows].join('\n')
-
-    return new HttpResponse(csv, {
-      headers: { 'Content-Type': 'text/csv' },
-    })
   }),
 ]
 
